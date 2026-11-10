@@ -1,0 +1,399 @@
+---
+title: "Used Car Price Analysis"
+author: "Tommy Ngo"
+date: "2024-05-08"
+output: html_document
+---
+
+```{r, warning=FALSE, show_col_types = FALSE}
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(kableExtra)
+library(car)
+library(readr)
+library(GGally)
+library(ggpubr)
+library(caret)
+library(knitr)
+library(tidyr)
+library(MASS)
+
+set.seed(1)
+cars <- read_csv("car details v4.csv")
+
+#split engine cc number and change into numeric instead of string
+cars$Engine <- sub(" .*", "", cars$Engine)
+cars$Engine = as.numeric(cars$Engine)
+
+#split horsepower and convert to numeric
+cars$`Max Power` <- sub(" .*", "", cars$`Max Power`)
+cars$`Max Power` = as.numeric(cars$`Max Power`)
+
+#split max torque and convert to numeric
+cars$`Max Torque` <- sub(" .*", "", cars$`Max Torque`)
+cars$`Max Torque` = as.numeric(cars$`Max Torque`)
+
+#convert first, second, and third into numeric
+cars$Owner <- ifelse(cars$Owner == "First", 1, 
+                   ifelse(cars$Owner == "Second", 2, 
+                          ifelse(cars$Owner == "Third", 3, cars$Owner)))
+cars$Owner = as.numeric(cars$Owner)
+
+conversion_rate <- 83
+# Convert the price from Rupees to USD
+cars$Price <- cars$Price / conversion_rate
+
+#remove N/A and Unregistered Car
+cars <- na.omit(cars)
+cars <- subset(cars, Owner != "UnRegistered Car")
+```
+
+
+
+```{r}
+#Scatterplots
+p1 = ggplot(data = cars, mapping = aes(x = Year, y = Price))+
+  geom_point() + 
+  theme_minimal()
+
+p2 = ggplot(data = cars, mapping = aes(x = Kilometer, y = Price))+
+  geom_point() + 
+  theme_minimal()
+
+p3 = ggplot(data = cars, mapping = aes(x = Owner, y = Price))+
+  geom_point() + 
+  theme_minimal()
+
+p4 = ggplot(data = cars, mapping = aes(x = `Seating Capacity`, y = Price))+
+  geom_point() + 
+  theme_minimal()
+
+p5 = ggplot(data = cars, mapping = aes(x = `Fuel Tank Capacity`, y = Price))+
+  geom_point() + 
+  theme_minimal()
+
+p6 = ggplot(data = cars, mapping = aes(x = Engine, y = Price))+
+  geom_point() + 
+  theme_minimal()
+
+p7 = ggplot(data = cars, mapping = aes(x = `Max Power`, y = Price))+
+  geom_point() + 
+  theme_minimal()
+
+p8 = ggplot(data = cars, mapping = aes(x = `Max Torque`, y = Price))+
+  geom_point() + 
+  theme_minimal()
+
+p9 = ggplot(data = cars, mapping = aes(x = Length, y = Price))+
+  geom_point() + 
+  theme_minimal()
+
+p10 = ggplot(data = cars, mapping = aes(x = Width, y = Price))+
+  geom_point() + 
+  theme_minimal()
+
+p11 = ggplot(data = cars, mapping = aes(x = Height, y = Price))+
+  geom_point() + 
+  theme_minimal()
+
+grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, nrow = 4, ncol = 3)
+```
+
+```{r}
+#boxplots
+b1 = ggplot(data = cars) + 
+  geom_boxplot(mapping = aes(x=Price)) + 
+  theme_minimal()
+
+b2 = ggplot(data = cars) + 
+  geom_boxplot(mapping = aes(x=Year)) + 
+  theme_minimal()
+
+b3 = ggplot(data = cars) + 
+  geom_boxplot(mapping = aes(x=Kilometer)) + 
+  theme_minimal()
+
+b4 = ggplot(data = cars) + 
+  geom_boxplot(mapping = aes(x=Owner)) + 
+  theme_minimal()
+
+b5 = ggplot(data = cars) + 
+  geom_boxplot(mapping = aes(x=Engine)) + 
+  theme_minimal()
+
+b6 = ggplot(data = cars) + 
+  geom_boxplot(mapping = aes(x=`Max Power`)) + 
+  theme_minimal()
+
+b7 = ggplot(data = cars) + 
+  geom_boxplot(mapping = aes(x=`Max Torque`)) + 
+  theme_minimal()
+
+b8 = ggplot(data = cars) + 
+  geom_boxplot(mapping = aes(x=`Seating Capacity`)) + 
+  theme_minimal()
+
+b9 = ggplot(data = cars) + 
+  geom_boxplot(mapping = aes(x=`Fuel Tank Capacity`)) + 
+  theme_minimal()
+
+b10 = ggplot(data = cars) + 
+  geom_boxplot(mapping = aes(x=Length)) + 
+  theme_minimal()
+
+b11 = ggplot(data = cars) + 
+  geom_boxplot(mapping = aes(x=Width)) + 
+  theme_minimal()
+
+b12 = ggplot(data = cars) + 
+  geom_boxplot(mapping = aes(x=Height)) + 
+  theme_minimal()
+
+grid.arrange(b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12,
+             nrow = 4, ncol = 3)
+```
+
+```{r}
+#histograms
+h1 = ggplot(data = cars) + 
+  geom_histogram(mapping = aes(x=Price)) + 
+  theme_minimal()
+
+h2 = ggplot(data = cars) + 
+  geom_histogram(mapping = aes(x=Year)) + 
+  theme_minimal()
+
+h3 = ggplot(data = cars) + 
+  geom_histogram(mapping = aes(x=Kilometer)) + 
+  theme_minimal()
+
+h4 = ggplot(data = cars) + 
+  geom_histogram(mapping = aes(x=Owner), stat = 'count') + 
+  theme_minimal()
+
+h5 = ggplot(data = cars) + 
+  geom_histogram(mapping = aes(x=Engine)) + 
+  theme_minimal()
+
+h6 = ggplot(data = cars) + 
+  geom_histogram(mapping = aes(x=`Max Power`)) + 
+  theme_minimal()
+
+h7 = ggplot(data = cars) + 
+  geom_histogram(mapping = aes(x=`Max Torque`)) + 
+  theme_minimal()
+
+h8 = ggplot(data = cars) + 
+  geom_histogram(mapping = aes(x=`Seating Capacity`)) + 
+  theme_minimal()
+
+h9 = ggplot(data = cars) + 
+  geom_histogram(mapping = aes(x=`Fuel Tank Capacity`)) + 
+  theme_minimal()
+
+h10 = ggplot(data = cars) + 
+  geom_histogram(mapping = aes(x=Length)) + 
+  theme_minimal()
+
+h11 = ggplot(data = cars) + 
+  geom_histogram(mapping = aes(x=Width)) + 
+  theme_minimal()
+
+h12 = ggplot(data = cars) + 
+  geom_histogram(mapping = aes(x=Height)) + 
+  theme_minimal()
+
+grid.arrange(h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12,
+             nrow = 4, ncol = 3)
+```
+
+
+
+
+```{r}
+#summary of variables and pair plots
+df = data.frame(cars$Price, cars$Year, cars$Kilometer, cars$Owner,
+                cars$Engine, cars$`Max Power`, cars$`Max Torque`, cars$Length,
+                cars$Height, cars$Width, cars$`Fuel Tank Capacity`)
+
+ggpairs(df)
+ggpairs(df,
+        title = "Scatter Plot Matrix of Variables",
+        upper = list(continuous = "points"),
+        lower = list(continuous = "smooth"),
+        diag = list(continuous = "barDiag"))
+
+summary_stats <- df %>%
+  summarise_all(list(
+    Mean = ~mean(.),
+    Median = ~median(.),
+    SD = ~sd(.),
+    Min = ~min(.),
+    Max = ~max(.),
+    `1st Qu.` = ~quantile(., 0.25),
+    `3rd Qu.` = ~quantile(., 0.75)
+  )) %>%
+  pivot_longer(cols = everything(),
+               names_to = c("Variable", "Statistic"),
+               names_sep = "_") %>%
+  pivot_wider(names_from = Statistic, values_from = value)
+
+# Format the table
+kable(summary_stats, caption = "Summary Statistics for Multiple Variables") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+```
+
+
+```{r}
+#remove outliers
+cars <- cars %>%
+  filter(Kilometer <= 400000)
+
+cars <- cars %>%
+  filter(Year >= 2000)
+
+cars <- cars %>%
+  filter(Price <= 100000)
+```
+
+
+```{r}
+#fitting first model with all numerical variables
+first_model = lm(Price~Year + Kilometer + `Seating Capacity` +
+                   `Fuel Tank Capacity` + Engine + Owner + `Max Torque` +
+                   `Max Power` + Length + Width + Height, data = cars)
+
+summary_1 = summary(first_model)
+
+summary_1
+
+#using stepwise to determine number and order of predictors
+stepwise_model <- step(first_model, direction = "both")
+```
+
+
+```{r}
+#fitting second model based on stepwise
+second_model = lm(Price ~ Year + Kilometer + `Seating Capacity` +
+                    `Fuel Tank Capacity` + Engine + `Max Torque` +
+                    `Max Power` + Height, data = cars)
+
+summary(second_model)
+
+#vif for multicollinearity
+table = vif(second_model)
+vif_df <- data.frame(VIF = table)
+
+kable(vif_df, caption = "Variance Inflation Factor (VIF) Results")%>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = F)
+```
+
+#### VIF for Engine, Power, and Torque are high, sugests collinearity, create new models with only one of each to compare which is best
+
+```{r}
+#third model accounting for multicollinearity, k-fold for validation
+set.seed(123)
+mod1 = lm(Price ~ Year + Kilometer + `Seating Capacity` + `Fuel Tank Capacity`
+          + Engine + Height, data = cars)
+
+mod2 = lm(Price ~ Year + Kilometer + `Seating Capacity` + `Fuel Tank Capacity`
+          + `Max Power` + Height, data = cars)
+
+mod3 = lm(Price ~ Year + Kilometer + `Seating Capacity` + `Fuel Tank Capacity`
+          + `Max Torque` + Height, data = cars)
+
+
+train_control <- trainControl(method = "cv", number = 10)  # 10-fold cross-validation
+
+# Train the model using cross-validation
+model1 <- train(Price ~ Year + Kilometer + `Seating Capacity` +
+                  `Fuel Tank Capacity` + Engine + Height, data = cars,
+                method = "rf", trControl = train_control)
+
+model2 <- train(Price ~ Year + Kilometer + `Seating Capacity` +
+                  `Fuel Tank Capacity` + `Max Power` + Height, data = cars,
+                method = "rf", trControl = train_control)
+
+model3 <- train(Price ~ Year + Kilometer + `Seating Capacity` +
+                  `Fuel Tank Capacity` + `Max Torque` + Height, data = cars,
+                method = "rf", trControl = train_control)
+
+# Print the results
+print(model1)
+print(model2)
+print(model3)
+```
+
+```{r}
+#fitting third model and checking for assumptions
+third_model = lm(Price ~ Year + Kilometer + `Seating Capacity` +
+                   `Fuel Tank Capacity` + `Max Power` + Height, data = cars)
+
+summary(third_model)
+
+residuals <- resid(third_model)
+
+#Q-Q plot for normality
+ggplot(data.frame(residuals = residuals), aes(sample = residuals)) +
+  geom_qq() +
+  geom_qq_line() +
+  ggtitle("Q-Q Plot of Residuals") +
+  theme_minimal()
+
+#resid plot for constant variance
+fitted_values <- fitted(third_model)
+ggplot(data.frame(fitted_values = fitted_values, residuals = residuals),
+       aes(x = fitted_values, y = residuals)) +
+  geom_point(color = "black", alpha = 0.5) +
+  geom_smooth(method = "loess", color = "red", se = FALSE) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  labs(title = "Residuals vs. Fitted Values",
+       x = "Fitted Values",
+       y = "Residuals") +
+  theme_minimal()
+```
+
+```{r}
+#boxcox transformation
+bc_transform = boxcox(third_model)
+
+ bc_val = bc_transform$x[which.max(bc_transform$y)]
+bc_val
+
+transformed_price = log(cars$Price,10)
+
+
+fourth_model = lm(transformed_price ~ Year + Kilometer + `Seating Capacity`
+                  + `Fuel Tank Capacity` + `Max Power` + Height, data = cars)
+
+residuals <- resid(fourth_model)
+fitted_values <- fitted(fourth_model)
+
+#new qq plot
+ggplot(data.frame(residuals = residuals), aes(sample = residuals)) +
+  geom_qq() +
+  geom_qq_line() +
+  ggtitle("Q-Q Plot of Residuals (Transformed)") +
+  theme_minimal()
+
+#new resid plot
+ggplot(data.frame(fitted_values = fitted_values, residuals = residuals),
+       aes(x = fitted_values, y = residuals)) +
+  geom_point(color = "black", alpha = 0.5) +
+  geom_smooth(method = "loess", color = "red", se = FALSE) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  labs(title = "Residuals vs. Fitted Values (Transformed)",
+       x = "Fitted Values",
+       y = "Residuals") +
+  theme_minimal()
+
+summary(fourth_model)
+```
+
+
+
+
+
